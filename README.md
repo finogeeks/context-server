@@ -1,10 +1,10 @@
-# Agentic SDK Server
+# Context Server
 
 > 🤖 服务端智能体运行引擎，为移动端应用提供强大的AI智能体能力
 
 ## 概述
 
-Agentic SDK Server 是一个高性能的服务端 AI 智能体编排引擎，专为移动端应用设计。它提供了完整的智能体生态系统，支持多种专业化智能体、工具集成和实时流式响应。
+Context Server 是一个高性能的服务端 AI 智能体编排引擎，专为移动端应用设计。它提供了完整的智能体生态系统，支持多种专业化智能体、工具集成和实时流式响应。
 
 ### 架构图
 
@@ -13,7 +13,7 @@ Agentic SDK Server 是一个高性能的服务端 AI 智能体编排引擎，专
     ↓ (集成)
 Agentic SDK (iOS/Android)
     ↓ (SSE 长连接)
-Agentic SDK Server
+Context Server
     ↓ (智能体编排)
 专业化智能体 + MCP 工具
 ```
@@ -24,8 +24,7 @@ Agentic SDK Server
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-org/agentic-sdk-server.git
-cd agentic-sdk-server
+git clone git@github.com:finogeeks/context-server.git
 
 # 修改 docker-compose.yml 的配置
 - LLM_API_KEY=your_key
