@@ -19,9 +19,9 @@ services:
       - LLM_MODEL=gpt-4o-mini
 
       # 轻量级 LLM 配置(14B 模型), 用于一些内部轻量级场景
-      - LIGHTWEIGHT_LLM_API_KEY=${LIGHTWEIGHT_LLM_API_KEY:-${LLM_API_KEY}}
-      - LIGHTWEIGHT_LLM_BASE_URL=${LIGHTWEIGHT_LLM_BASE_URL:-${LLM_BASE_URL}}
-      - LIGHTWEIGHT_LLM_MODEL=${LIGHTWEIGHT_LLM_MODEL:-gpt-4o-mini}
+      - LIGHTWEIGHT_LLM_API_KEY=your_model
+      - LIGHTWEIGHT_LLM_BASE_URL=https://api.openai.com/v1
+      - LIGHTWEIGHT_LLM_MODEL=gpt-4o-mini
 
       # 持久化配置
       - PERSISTENCE_MODE=nats_timescale
