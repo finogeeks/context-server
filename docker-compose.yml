@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # context-server - 主服务
+  # ===========================================
+  context-server:
+    image: finogeek/context-server:latest
+    container_name: context-server
+    ports:
+      - "8123:8123"
+    environment:
+      - PORT=8123
+      - NODE_ENV=production
+
+      # LLM 配置
+      - LLM_API_KEY=your_model
+      - LLM_BASE_URL=https://api.openai.com/v1
+      - LLM_MODEL=gpt-4o-mini
+
+      # 轻量级 LLM 配置(14B 模型), 用于一些内部轻量级场景
+      - LIGHTWEIGHT_LLM_API_KEY=${LIGHTWEIGHT_LLM_API_KEY:-${LLM_API_KEY}}
+      - LIGHTWEIGHT_LLM_BASE_URL=${LIGHTWEIGHT_LLM_BASE_URL:-${LLM_BASE_URL}}
+      - LIGHTWEIGHT_LLM_MODEL=${LIGHTWEIGHT_LLM_MODEL:-gpt-4o-mini}
+
+      # 持久化配置
+      - PERSISTENCE_MODE=nats_timescale
+
+      # NATS 配置
+      - NATS_SERVERS=nats://nats:4222
+      - NATS_MAX_RECONNECT=10
+      - NATS_RECONNECT_WAIT=2000
+      - NATS_TIMEOUT=5000
+
+      # 持久化 TimescaleDB 配置
+      - TIMESCALE_HOST=timescaledb
+      - TIMESCALE_PORT=5432
+      - TIMESCALE_DATABASE=agentic_db
+      - TIMESCALE_USER=postgres
+      - TIMESCALE_PASSWORD=postgres123
+      - TIMESCALE_SSL=false
+      - TIMESCALE_MAX_CONNECTIONS=20
+      - TIMESCALE_IDLE_TIMEOUT=30000
+      - TIMESCALE_CONNECTION_TIMEOUT=10000
+    depends_on:
+      nats:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - agentic_network
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: agentic-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    command: >
+      --http_port 8222
+      --port 4222
+      --cluster_name agentic_cluster
+      --cluster nats://0.0.0.0:6222
+      --routes=nats-route://nats:6222
+      --max_payload ${NATS_MAX_PAYLOAD:-8MB}
+      --max_connections ${NATS_MAX_CONNECTIONS:-64000}
+      --max_control_line ${NATS_MAX_CONTROL_LINE:-4096}
+    networks:
+      - agentic_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/varz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: agentic-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${TIMESCALE_DATABASE:-agentic_sessions}
+      POSTGRES_USER: ${TIMESCALE_USER:-postgres}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-postgres123}
+      POSTGRES_HOST_AUTH_METHOD: trust
+      TIMESCALEDB_TELEMETRY: off
+      TS_TUNE_MEMORY: ${TS_TUNE_MEMORY:-1GB}
+      TS_TUNE_NUM_CPUS: ${TS_TUNE_NUM_CPUS:-2}
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - agentic_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-postgres} -d ${TIMESCALE_DATABASE:-agentic_sessions}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: >
+      postgres
+      -c shared_preload_libraries=timescaledb
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
+      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-64MB}
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=${POSTGRES_WORK_MEM:-4MB}
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c log_statement=${POSTGRES_LOG_STATEMENT:-none}
+      -c log_min_duration_statement=${POSTGRES_LOG_MIN_DURATION:-1000}
+
+# ===========================================
+# 网络配置
+# ===========================================
+networks:
+  agentic_network:
+    driver: bridge
+    name: agentic_network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===========================================
+# 数据卷配置
+# ===========================================
+volumes:
+  # TimescaleDB 数据
+  timescaledb_data:
+    name: agentic_timescaledb_data
+    driver: local
