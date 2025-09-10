@@ -28,14 +28,14 @@ git clone https://github.com/your-org/agentic-sdk-server.git
 cd agentic-sdk-server
 
 # 修改 docker-compose.yml 的配置
-- LLM_API_KEY=your_model
+- LLM_API_KEY=your_key
 - LLM_BASE_URL=https://api.openai.com/v1
 - LLM_MODEL=gpt-4o-mini
 
 # 轻量级 LLM 配置(14B 模型), 用于一些内部轻量级场景。也可以同LLM_API_KEY等配置一样的
-- LIGHTWEIGHT_LLM_API_KEY=${LIGHTWEIGHT_LLM_API_KEY:-${LLM_API_KEY}}
-- LIGHTWEIGHT_LLM_BASE_URL=${LIGHTWEIGHT_LLM_BASE_URL:-${LLM_BASE_URL}}
-- LIGHTWEIGHT_LLM_MODEL=${LIGHTWEIGHT_LLM_MODEL:-gpt-4o-mini}
+- LIGHTWEIGHT_LLM_API_KEY=your_key
+- LIGHTWEIGHT_LLM_BASE_URL=https://api.openai.com/v1
+- LIGHTWEIGHT_LLM_MODEL=gpt-4o-mini
 ```
 
 ### 2. 启动服务

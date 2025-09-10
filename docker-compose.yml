@@ -14,12 +14,12 @@ services:
       - NODE_ENV=production
 
       # LLM 配置
-      - LLM_API_KEY=your_model
+      - LLM_API_KEY=your_key
       - LLM_BASE_URL=https://api.openai.com/v1
       - LLM_MODEL=gpt-4o-mini
 
       # 轻量级 LLM 配置(14B 模型), 用于一些内部轻量级场景
-      - LIGHTWEIGHT_LLM_API_KEY=your_model
+      - LIGHTWEIGHT_LLM_API_KEY=your_key
       - LIGHTWEIGHT_LLM_BASE_URL=https://api.openai.com/v1
       - LIGHTWEIGHT_LLM_MODEL=gpt-4o-mini
 
