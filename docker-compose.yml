@@ -43,63 +43,38 @@ services:
       - TIMESCALE_IDLE_TIMEOUT=30000
       - TIMESCALE_CONNECTION_TIMEOUT=10000
     depends_on:
-      nats:
-        condition: service_healthy
-      timescaledb:
-        condition: service_healthy
-    networks:
-      - agentic_network
+      - nats
+      - timescaledb
     restart: unless-stopped
 
   nats:
-    image: nats:2.10-alpine
-    container_name: agentic-nats
+    image: nats:latest
+    container_name: nats-server
     ports:
-      - "4222:4222"
-      - "8222:8222"
-      - "6222:6222"
-    command: >
-      --http_port 8222
-      --port 4222
-      --cluster_name agentic_cluster
-      --cluster nats://0.0.0.0:6222
-      --routes=nats-route://nats:6222
-      --max_payload ${NATS_MAX_PAYLOAD:-8MB}
-      --max_connections ${NATS_MAX_CONNECTIONS:-64000}
-      --max_control_line ${NATS_MAX_CONTROL_LINE:-4096}
-    networks:
-      - agentic_network
+      - "4222:4222"  # NATS 客户端连接端口
+      - "8222:8222"  # NATS 监控端口
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/varz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf  # 挂载配置文件
+    command: --config /etc/nats/nats.conf  # 使用自定义配置文件
 
   timescaledb:
     image: timescale/timescaledb:latest-pg15
-    container_name: agentic-timescaledb
+    container_name: timescaledb
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: ${TIMESCALE_DATABASE:-agentic_sessions}
-      POSTGRES_USER: ${TIMESCALE_USER:-postgres}
-      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-postgres123}
+      POSTGRES_DB: "agentic_db"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres123"
       POSTGRES_HOST_AUTH_METHOD: trust
-      TIMESCALEDB_TELEMETRY: off
-      TS_TUNE_MEMORY: ${TS_TUNE_MEMORY:-1GB}
-      TS_TUNE_NUM_CPUS: ${TS_TUNE_NUM_CPUS:-2}
+      TIMESCALEDB_TELEMETRY: "off"
+      TS_TUNE_MEMORY: "1GB"
+      TS_TUNE_NUM_CPUS: 2
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
-    networks:
-      - agentic_network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-postgres} -d ${TIMESCALE_DATABASE:-agentic_sessions}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     command: >
       postgres
       -c shared_preload_libraries=timescaledb
@@ -119,21 +94,15 @@ services:
       -c log_min_duration_statement=${POSTGRES_LOG_MIN_DURATION:-1000}
 
 # ===========================================
-# 网络配置
-# ===========================================
-networks:
-  agentic_network:
-    driver: bridge
-    name: agentic_network
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# ===========================================
 # 数据卷配置
 # ===========================================
 volumes:
   # TimescaleDB 数据
   timescaledb_data:
     name: agentic_timescaledb_data
+    driver: local
+  
+  # NATS JetStream 数据
+  nats_jetstream_data:
+    name: agentic_nats_jetstream_data
     driver: local

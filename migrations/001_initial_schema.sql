@@ -7,7 +7,7 @@
 -- 启用 TimescaleDB 扩展
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 
--- 创建 agentic_sessions 数据库（如果不存在）
+-- 创建 agentic_db 数据库（如果不存在）
 -- 注意：在 Docker 容器中，数据库通过环境变量 POSTGRES_DB 创建
 
 -- ==========================================
