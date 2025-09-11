@@ -64,15 +64,15 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: "agentic_db"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres123"
+      POSTGRES_DB: agentic_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
       POSTGRES_HOST_AUTH_METHOD: trust
       TIMESCALEDB_TELEMETRY: "off"
       TS_TUNE_MEMORY: "1GB"
       TS_TUNE_NUM_CPUS: 2
     volumes:
-      - timescaledb_data:/var/lib/postgresql/data
+      - ./data/timescale:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
     restart: unless-stopped
     command: >
@@ -92,17 +92,3 @@ services:
       -c max_wal_size=4GB
       -c log_statement=${POSTGRES_LOG_STATEMENT:-none}
       -c log_min_duration_statement=${POSTGRES_LOG_MIN_DURATION:-1000}
-
-# ===========================================
-# 数据卷配置
-# ===========================================
-volumes:
-  # TimescaleDB 数据
-  timescaledb_data:
-    name: agentic_timescaledb_data
-    driver: local
-  
-  # NATS JetStream 数据
-  nats_jetstream_data:
-    name: agentic_nats_jetstream_data
-    driver: local
