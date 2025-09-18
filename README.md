@@ -64,3 +64,79 @@ curl --location --request POST 'http://113.105.90.181:30301/api/agui' \
       ]
     }'
 ```
+
+## 自定义Agent
+
+Context Server 支持注册和管理自定义Agent
+
+### Agent接口规范
+
+自定义Agent需要实现以下 HTTP 接口：
+
+**请求格式 (POST /{agent-endpoint}):**
+```json
+{
+  "messages": [
+    {
+      "id": "string",
+      "role": "user|assistant|system",
+      "content": "string"
+    }
+  ],
+  "tools": [],
+  "context": {}
+}
+```
+
+**响应格式:**
+```json
+{
+  "content": "智能体回复内容",
+  "toolCalls": [
+    {
+      "id": "string",
+      "name": "string",
+      "parameters": {}
+    }
+  ]
+}
+```
+
+### 注册智能体
+
+```bash
+# 注册新智能体
+curl -X POST http://localhost:8123/api/agents/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "weather-agent",
+    "description": "天气查询智能体",
+    "llmTag": "weather_llm",
+    "toolCategories": ["weather", "general"],
+    "endpointUrl": "http://your-server.com/agent-endpoint",
+    "endpointMethod": "POST",
+    "endpointTimeout": 10000
+  }'
+```
+
+### 管理智能体
+
+```bash
+# 查看所有智能体
+curl http://localhost:8123/api/agents
+
+# 更新智能体配置
+curl -X PUT http://localhost:8123/api/agents/1 \
+  -H "Content-Type: application/json" \
+  -d '{"description": "更新后的描述"}'
+
+# 删除智能体
+curl -X DELETE http://localhost:8123/api/agents/1
+
+# 刷新智能体注册表
+curl -X POST http://localhost:8123/api/agents/refresh
+```
+
+### 开发示例
+
+参考 `examples/node-agent-example/` 目录中的完整示例实现。

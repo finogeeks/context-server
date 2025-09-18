@@ -1,0 +1,21 @@
+{
+  "name": "weather-agent-example",
+  "version": "1.0.0",
+  "description": "第三方智能体示例 - 天气查询智能体",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": [
+    "agent",
+    "weather",
+    "context-server",
+    "ai"
+  ],
+  "author": "Context Server Team",
+  "license": "MIT"
+}
